@@ -1,0 +1,4 @@
+
+g++ e_eff.cpp -static -o eps -DNO_MCDB -D_DEBUG_no -O2 -Wuninitialized  -I../include ../lib-unix/libmconf.a -lpthread
+
+g++ F_bs.cpp -static -o Fbs -DNO_MCDB -D_DEBUG_no -O2 -Wuninitialized  -I../include ../lib-unix/libmconf.a -lpthread

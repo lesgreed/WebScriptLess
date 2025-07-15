@@ -1,0 +1,31 @@
+#!/bin/bash
+
+### g++
+
+#g++ -Wall -fPIC -c -DNO_MCDB -DBUILD_LIB -O2 -I../include -Wno-unused-result \
+
+g++ -w -fPIC -c -DNO_MCDB -DBUILD_LIB -O2 -I../include -Wno-unused-result \
+                                  ../src/CStconfig.cpp \
+                                  ../src/CRayTrace.cpp  ../src/C3dMesh.cpp \
+                                  ../src/loadfromdb.cpp ../src/loadwout.cpp \
+                                  ../src/loadlhd.cpp ../src/spline.cpp \
+                                  ../src/CEfit.cpp   ../src/loadEfit.cpp \
+                                  ../src/rkf45.cpp \
+                                  ../matlab-dll/mconf_matlab.cpp
+
+g++ -shared -Wl,-soname,mconf_matlab64.so -o mconf_matlab64.so  *.o
+
+cp ../matlab-dll/mconf_matlab.h ../bin/mconf_matlab64.h
+mv mconf_matlab64.so     ../bin/
+
+
+#g++ -shared -Wl,-soname,libmconf_matlab.so.1 -o libmconf_matlab.so.1.0  *.o
+#mv libmconf_matlab.so.1.0 ../
+#ln -sf ../libmconf_matlab.so.1.0  ../libmconf_matlab.so
+#ln -sf ../libmconf_matlab.so.1.0  ../libmconf_matlab.so.1
+
+rm -f *.o
+
+## run the following setenv command  before starting Matlab 
+#setenv LD_PRELOAD /usr/lib/libstdc++.so.6 
+#matlab

@@ -1,0 +1,12 @@
+#!/bin/tcsh
+
+
+## How to create shared library
+
+### 
+
+g++ -Wall -fPIC -c conv.cpp
+g++ -shared -Wl,-soname,libmconf_matlab.so.1 -o libmconf_matlab.so.1.0   *.o
+
+ln -sf libmconf_matlab.so.1.0 libmconf_matlab.so
+ln -sf libmconf_matlab.so.1.0 libmconf_matlab.so.1

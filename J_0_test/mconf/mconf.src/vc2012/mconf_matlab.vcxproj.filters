@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\C3dMesh.cpp" />
+    <ClCompile Include="..\src\CEfit.cpp" />
+    <ClCompile Include="..\src\CRayTrace.cpp" />
+    <ClCompile Include="..\src\CStconfig.cpp" />
+    <ClCompile Include="..\src\loadEfit.cpp" />
+    <ClCompile Include="..\src\loadfromdb.cpp" />
+    <ClCompile Include="..\src\loadlhd.cpp" />
+    <ClCompile Include="..\src\loadwout.cpp" />
+    <ClCompile Include="..\matlab-dll\mconf_matlab.cpp" />
+    <ClCompile Include="..\src\rkf45.cpp" />
+    <ClCompile Include="..\src\spline.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\matlab-dll\mconf_matlab.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="netcdfLib">
+      <UniqueIdentifier>{21614418-8d23-4d78-9190-ab57d267e627}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

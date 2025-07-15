@@ -1,0 +1,20 @@
+#!/bin/sh
+
+### g++
+
+g++ -Wall -fPIC -c -DNO_MCDB -O2 -I../include -Wno-unused-result \
+                                  ../src/CStconfig.cpp \
+                                  ../src/CRayTrace.cpp  ../src/C3dMesh.cpp \
+                                  ../src/loadfromdb.cpp ../src/loadwout.cpp \
+                                  ../src/loadlhd.cpp ../src/spline.cpp \
+                                  ../src/CEfit.cpp   ../src/loadEfit.cpp \
+                                  ../src/rkf45.cpp \
+                                  ../matlab-dll/mconf_matlab.cpp
+
+g++ -dynamiclib -o mconf_matlab64.dylib  *.o                                  
+
+cp mconf_matlab64.dylib ../
+cp mconf_matlab64.dylib ../matlab-dll/
+
+rm -f *.o
+

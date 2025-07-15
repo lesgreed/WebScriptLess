@@ -1,0 +1,6 @@
+circular tokamak: B0, R0, a, q
+1  100  1  3.14
+
+PoloidalFlux = -B0*R0*(R0-sqrt(R0*R0-r^2))/q;
+
+B_tor = B0*R0/R;

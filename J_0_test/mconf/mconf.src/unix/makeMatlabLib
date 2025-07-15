@@ -1,0 +1,38 @@
+#!/bin/bash
+
+ARCH=`uname -m`
+if [ ${ARCH} == 'x86_64' ] ; then
+ echo  Use this script only on 32-bit architecture
+ exit 1
+fi 
+
+#g++ -Wall -fPIC -c -DNO_MCDB -DBUILD_LIB -O2 -I../include -Wno-unused-result \
+
+g++ -w -fPIC -c -DNO_MCDB -DBUILD_LIB -O2 -I../include -Wno-unused-result \
+                                  ../src/CStconfig.cpp \
+                                  ../src/CRayTrace.cpp  ../src/C3dMesh.cpp \
+                                  ../src/loadfromdb.cpp ../src/loadwout.cpp \
+                                  ../src/loadlhd.cpp ../src/spline.cpp \
+                                  ../src/CEfit.cpp   ../src/loadEfit.cpp \
+                                  ../src/rkf45.cpp \
+                                  ../matlab-dll/mconf_matlab.cpp
+
+g++ -shared -Wl,-soname,mconf_matlab.so -o mconf_matlab.so  *.o
+
+cp ../matlab-dll/mconf_matlab.h ../bin/mconf_matlab32.h
+mv mconf_matlab.so     ../bin/
+
+#  correct the typedef MC_HANDLE for 32-bit architecture
+old_text="typedef unsigned long long int MC_HANDLE"
+new_text="typedef unsigned int  MC_HANDLE;"
+sed -i "/${old_text}/c ${new_text}" ../bin/mconf_matlab32.h 
+
+#g++ -shared -Wl,-soname,libmconf_matlab.so.1 -o libmconf_matlab.so.1.0  *.o
+#mv libmconf_matlab.so.1.0 ../
+#ln -sf ../libmconf_matlab.so.1.0  ../libmconf_matlab.so
+#ln -sf ../libmconf_matlab.so.1.0  ../libmconf_matlab.so.1
+
+rm -f *.o
+
+## run the following setenv command  before starting Matlab 
+#setenv LD_PRELOAD /usr/lib/libstdc++.so.6 

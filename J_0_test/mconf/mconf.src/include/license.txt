@@ -1,0 +1,126 @@
+// this is doxygen style html-page
+
+/** @page SoftwareLicense Software License
+
+Except where otherwise noted, all of the documentation and software included
+in this Software package is copyrighted by IPP Max-Planck-Institute.
+
+This software is provided "as-is," without any express or implied warranty.
+In no event shall the author be held liable for any damages arising from the
+use of this software.
+<div class="contents" align="left">
+<table border="0"><tr>
+<td>\image html IPP.png</td> 
+<td>Copyright &copy; 2005-2011 IPP Max-Planck-Institut f&uuml;r Plasmaphysik.<br> 
+All rights reserved. http://www.ipp.mpg.de</td> 
+</tr></table>
+</div>
+<div class="no-print" align="center"><table border="0">
+<tr> 
+<td>\image html background.png</td>
+<td>\image html background.png</td>
+<td>\image html background.png</td>
+</tr>
+</table></div>
+
+<hr>
+
+If you are working in IPP consider the following steps before 
+transferring this software to somebody:
+
+- write the letter to the administration: <b>Vorlage an das Direktorium</b> 
+  (z.B. Begr&uuml;ndung: Die Weitergabe erfolgt im Rahmen der Zusammenarbeit....)
+- attach <b>Merkblatt zur Weitergabe von Computer Software an andere 
+wissenschaftliche Einrichtungen</b>
+- attach one of the <b>Anlage zur Direktoriumsvorlage</b>, see below
+
+You can find these forms in IPP internal network.\n
+Das Formular ist im Intranet unter Antr&auml;ge und im Sekretariat
+der Rechts- und Patentabteilung (Tel: 1425) erh&auml;ltlich.
+<hr>
+
+<b>
+Anlage zur Direktoriumsvorlage vom:
+
+Antragsteller
+</b>
+
+
+\par GENERAL CONDITIONS FOR THE USE OF COMPUTER SOFTWARE
+
+
+1. IPP allows the undersigning party (Name of Institution) to use this
+computer software provided that this software will be used exclusively for
+non-commercial research purposes.
+
+2. The undersigning party agrees, therefore, not to exploit this software
+commercially or to transfer it to third parties without prior written consent
+of IPP.
+
+3. The undersigning party agrees, not to use the software for military
+purposes or any other purpose falling under the provisions for
+non-proliferation.
+
+4. IPP provides no guarantee that the software is in good running order. No
+liability can be accepted for damage or injury arising from use of the
+software. Furthermore, IPP provides no guarantee that the use of the computer
+software will not involve any infringement of copyright. The undersigning
+party will notify IPP when it discovers that the software contains any error
+or infringes any copyright.
+
+5. The undersigning party will, on request, put programs developed from the
+IPP software at the disposal of IPP under the same conditions. Furthermore the
+undersigning party agrees to state the names of IPP and of the program
+provided when publishing research results obtained with the aid of this
+computer software.
+
+6. Transfer of the software will involve no costs for IPP.
+
+Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Signatures
+
+
+<br><hr>
+
+<b>
+Anlage zur Direktoriumsvorlage vom:
+
+Antragsteller
+</b>
+
+
+\par GENERAL CONDITIONS FOR THE USE OF COMPUTER SOFTWARE DERIVING FROM OPEN-SOURCE LICENCED SOFTWARE
+(i.e. GNU General Public License or Free Documentation License)
+
+1. IPP grants the undersigning party (Name of Institution) the following
+rights for this computer software exclusively under the conditions of the
+open-source license: to use, to copy, to distribute and to modify the computer
+software and to copy and distribute such modifications provided that the
+open-source license, the copyright notices, the license notice (saying that
+the license applies to the software) and the disclaimer of warranty are
+reproduced in all copies.
+
+2. The undersigning party may not use technical measures to obstruct or
+control the reading or further copying of the copies you make or distribute.
+
+3. The undersigning party agrees not to use the software for military purposes
+or any other purpose falling under the provisions for non-proliferation.
+
+4. IPP provides no warranty that the software is in good running order. No
+liability can be accepted for damage or injury arising from use of the
+software. Furthermore, IPP provides no guarantee that the use of the computer
+software will not involve any infringement of copyright. The undersigning
+party will notify IPP when it discovers that the software contains any error
+or infringes any copyright.
+
+5. The undersigning party will, on request, put programs developed from the
+IPP software at the disposal of IPP under the same conditions. Furthermore the
+undersigning party agrees to state the names of IPP and of the program
+provided when publishing research results obtained with the aid of this
+computer software.
+
+6. Transfer of the software will involve no costs for IPP.
+
+Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Signatures
+
+
+*/

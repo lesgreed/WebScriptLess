@@ -1,0 +1,22 @@
+#!/bin/bash
+## run the following commands to build library 
+# module load netcdf/4.7-gnu-serial-hdf5110 
+#./makeMatlabLib64_netcdf
+
+
+
+g++ -w -fPIC -c -DNO_MCDB -DBUILD_LIB -DNETCDF  -O2 -I../include -I${NETCDF_HOME}/include  -Wno-unused-result \
+                                  ../src/CStconfig.cpp \
+                                  ../src/CRayTrace.cpp  ../src/C3dMesh.cpp \
+                                  ../src/loadfromdb.cpp ../src/loadwout.cpp \
+                                  ../src/loadlhd.cpp ../src/spline.cpp \
+                                  ../src/CEfit.cpp   ../src/loadEfit.cpp \
+                                  ../src/rkf45.cpp \
+                                  ../matlab-dll/mconf_matlab.cpp
+
+g++ -shared -Wl,-soname,mconf_matlab64_netcdf.so -o mconf_matlab64_netcdf.so  *.o -lpthread  -L${NETCDF_HOME}/lib/  -lnetcdf_c++4  -lnetcdf 
+
+cp ../matlab-dll/mconf_matlab.h ../bin/mconf_matlab64.h
+mv mconf_matlab64_netcdf.so     ../bin/
+
+rm -f *.o

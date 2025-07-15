@@ -1,0 +1,42 @@
+﻿Build started 22.04.2022 05:57:09.
+     1>Project "h:\public\Matlab\mconf.src\vc2012\mconf_matlab.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\x86_amd64\CL.exe /c /I..\include /I"..\netCDF4.4.1.1-NC4-64\include" /Zi /nologo /W3 /WX- /O2 /Oi /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D DLL_EXPORTS /D NO_NETCDF /D _CRT_SECURE_NO_DEPRECATE /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc110.pdb" /Gd /TP /errorReport:prompt ..\src\C3dMesh.cpp ..\src\CEfit.cpp ..\src\CRayTrace.cpp ..\src\CStconfig.cpp ..\src\loadEfit.cpp ..\src\loadfromdb.cpp ..\src\loadlhd.cpp ..\src\loadwout.cpp "..\matlab-dll\mconf_matlab.cpp" ..\src\rkf45.cpp ..\src\spline.cpp
+         C3dMesh.cpp
+         CEfit.cpp
+         CRayTrace.cpp
+         CStconfig.cpp
+         ===> Don't change the class CArray2d, otherwise indexing will be destroyed.
+     1>..\src\CStconfig.cpp(8768): warning C4102: 'Finalize' : unreferenced label
+         loadEfit.cpp
+         loadfromdb.cpp
+         loadlhd.cpp
+         loadwout.cpp
+         mconf_matlab.cpp
+         rkf45.cpp
+         spline.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"..\bin\mconf_matlab64.dll" /INCREMENTAL:NO /NOLOGO /LIBPATH:"..\netCDF4.4.1.1-NC4-64\lib" netcdf.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:"h:\public\Matlab\mconf.src\bin\mconf_matlab64.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\bin\mconf_matlab64.lib" /MACHINE:X64 /DLL x64\Release\C3dMesh.obj
+         x64\Release\CEfit.obj
+         x64\Release\CRayTrace.obj
+         x64\Release\CStconfig.obj
+         x64\Release\loadEfit.obj
+         x64\Release\loadfromdb.obj
+         x64\Release\loadlhd.obj
+         x64\Release\loadwout.obj
+         x64\Release\mconf_matlab.obj
+         x64\Release\rkf45.obj
+         x64\Release\spline.obj
+            Creating library ..\bin\mconf_matlab64.lib and object ..\bin\mconf_matlab64.exp
+         Generating code
+         Finished generating code
+         mconf_matlab.vcxproj -> h:\public\Matlab\mconf.src\vc2012\..\bin\mconf_matlab64.dll
+       PostBuildEvent:
+         copy /b ..\matlab-dll\mconf_matlab.h   ..\bin\mconf_matlab64.h
+         :VCEnd
+                 1 file(s) copied.
+     1>Done Building Project "h:\public\Matlab\mconf.src\vc2012\mconf_matlab.vcxproj" (Rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:56.41
