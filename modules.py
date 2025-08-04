@@ -95,7 +95,7 @@ class Data:
     
 
     def data_already_input(self, scale, Name_Ports, Name_NBI, angle, config, B_0, diagnostic_types):
-
+      
         data_B = [[] for _ in range(11)]
         for i in range(len(Name_Ports)):
            data_i = self.data_nbi_ports(Name_NBI[i], Name_Ports[i], angle, scale, config,B_0)
@@ -139,16 +139,17 @@ class Data:
 
     def create_result_array_for_port_old(self, data_B_c, diagnostic_types):
         WF_array = []
-
-        with ThreadPoolExecutor() as executor:
-            results = list(tqdm(executor.map(self.process_data_for_point, range(len(data_B_c[1])), [data_B_c] * len(data_B_c[0]), diagnostic_types)))
+        import pickle
+        pickle.dumps(data_B_c) 
+        with ProcessPoolExecutor(max_workers=5) as executor:
+            results = list(tqdm(executor.map( self.Bget.process_data_for_point, range(len(data_B_c[1])), [data_B_c] * len(data_B_c[0]), diagnostic_types)))
 
         for result_for_i in results:
             WF_array.append(result_for_i)
-
+        print("ready!")
     
         return results
-
+""""
     def process_data_for_point(self,i, data_B_c, diagnostic_type):
 
         index_nbi = int(data_B_c[0][i].split('_')[-1]) - 1
@@ -164,7 +165,7 @@ class Data:
                 result = WF.CTS_wf(data_B_c[6][i][j], data_B_c[3][i][j], x_ev, y_ev)
             result_for_j.append(result) 
         return result_for_j
-
+"""
 
 
 
@@ -172,6 +173,25 @@ class calculus():
     def __init__(self):
          lll=0
          self.resolution_WF = 300
+
+
+
+    def process_data_for_point(self, i, data_B_c, diagnostic_type):
+        index_nbi = int(data_B_c[0][i].split('_')[-1]) - 1
+        result_for_j = []
+
+        for j in range(len(data_B_c[3][i])):
+            x_ev = np.linspace(10, 100, self.resolution_WF)
+            y_ev = np.linspace(-100, 100, self.resolution_WF) / 2.5
+
+            if diagnostic_type == 'FIDA':
+                result = WF.weight_Function(data_B_c[4][i][j], data_B_c[3][i][j], x_ev, y_ev)
+            elif diagnostic_type == 'CTS':
+                result = WF.CTS_wf(data_B_c[6][i][j], data_B_c[3][i][j], x_ev, y_ev)
+            result_for_j.append(result)
+        return result_for_j
+    
+
 
     def gets(self, point1, point2, scale, config, B_0):
       point1, point2 = point1 / 100, point2 / 100
@@ -245,7 +265,7 @@ class calculus():
      previous_directory = os.getcwd()
      os.chdir('J_0_test')
     
-     with ProcessPoolExecutor() as executor:
+     with ProcessPoolExecutor(max_workers=5) as executor:
         results = list(tqdm(executor.map(self.calculate_J_0_for_point, points, [config] * len(points), [B_0]*len(points)), total=len(points)))
      print(config)
      os.chdir(previous_directory)

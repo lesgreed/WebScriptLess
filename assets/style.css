@@ -170,14 +170,23 @@ body.dark-theme .slider-block {
   display: flex;
   gap: 20px;
   padding: 20px;
-  transition: margin-left 0.3s;
-  margin-left: 0;
+  height: calc(100vh - 100px);  /* фиксируем почти весь экран, кроме хедера */
+  box-sizing: border-box;
 }
 
-.settings-panel,
-.graph-panel {
+
+
+.settings-panel {
+  flex: 0 0 200px;      /* фиксированная ширина */
+  height: 100%;         /* 100% высоты контейнера */
   border-radius: 20px;
+  overflow-y: auto;
   padding: 20px;
+}
+
+body.dark-theme .settings-panel {
+  background-color: #222;
+  color: white;
 }
 
 body.light-theme .settings-panel {
@@ -185,16 +194,33 @@ body.light-theme .settings-panel {
   color: black;
 }
 
+.graph-panel {
+  flex: 1 1 auto;      /* занимает всё оставшееся */
+  height: 95.2%;        /* совпадает по высоте с остальными */
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 20px;
+  background: #fff;
+  display: flex;  
+  justify-content: center; /* Горизонтальное центрирование */
+  align-items: center;     /* Вертикальное центрирование */
+}
+
+body.dark-theme .graph-panel {
+  background: #333;
+  color: white;
+}
+
+
+
+
 body.light-theme .graph-panel {
   background-color: #ffffff;
   color: black;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
-body.dark-theme .settings-panel {
-  background-color: #222;
-  color: white;
-}
+
 
 body.dark-theme .graph-panel {
   background-color: #333;
@@ -234,7 +260,7 @@ body.dark-theme .graph-canvas {
 }
 
 #matrix-graph {
-  max-width: 300px;
+  max-width: 1000px;
   height: auto;
   display: block;
   margin: 0 auto;
@@ -288,14 +314,15 @@ body.dark-theme .rc-slider-mark-text {
 /* ============================================================================
    INPUT FIELDS: For Delta s, Delta J0, B0
 ============================================================================ */
-.settings-panel input {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  width: 100%;
+.settings-panel {
+  flex: 0 0 350px;        /* Увеличил ширину */
+  height: 99%;
+  border-radius: 20px;
+  overflow-y: auto;
+  padding: 30px;          /* Больше внутренний отступ */
   box-sizing: border-box;
 }
+
 
 body.dark-theme .settings-panel input {
   background-color: #222;
@@ -340,3 +367,189 @@ body.dark-theme .settings-panel input {
 }
 
 
+/* === Console Panel === */
+.console-container {
+  flex: 0 0 500px;     /* фиксированная ширина */
+  height: 100%;        /* 100% высоты контейнера */
+  margin-top: -16px;   /* приподнимает блок вверх */
+}
+
+.console-panel {
+  height: 95%;        /* заполняет контейнер */
+  overflow-y: auto;    /* скролл для длинного текста */
+  font-weight: 100;
+  font-size: 18px;
+  border-radius: 15px;
+
+  font-family: monospace;
+  padding: 20px;
+  background: #f1f1f1;
+  white-space: pre-wrap;      /* перенос строк внутри <pre> */
+  word-wrap: break-word;      /* ломает длинные слова без пробелов */
+  overflow-x: hidden;         /* выключаем горизонтальный скролл */
+}
+
+body.dark-theme .console-panel {
+  background: #222;
+  color: #eee;
+}
+
+.Select-control {
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* Блок для кнопок */
+.build-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;           /* расстояние между кнопками */
+  margin-top: 20px;    /* отступ сверху от других элементов */
+}
+
+/* Каждая большая кнопка */
+.big-action-btn {
+  width: 100%;         /* на всю ширину контейнера */
+  padding: 12px 0;     /* отступы сверху/снизу, по бокам — сами растянутся */
+  background-color: #007bff; /* основной цвет */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.big-action-btn:hover {
+  background-color: #0056b3;  /* темнее при наведении */
+}
+
+
+
+/* Make the react-select menu readable */
+.Select-menu-outer {
+  background-color: #fff;
+  color: #000;
+}
+
+body.dark-theme .Select-menu-outer {
+  background-color: #333;
+  color: #fff;
+}
+
+.Select-option {
+  background-color: inherit;
+  color: inherit;
+}
+
+.Select-option.is-focused {
+  background-color: #007bff;
+  color: #fff;
+}
+/* === FORCE OVERRIDES FOR ALL react-select === */
+
+.Select-control {
+  border: 1px solid #555 !important; 
+  box-shadow: none !important;
+  outline: none !important;
+  transition: none !important;
+  border-radius: 4px !important;
+}
+
+.Select-control:hover,
+.Select-control:focus,
+.Select-control.is-focused,
+.Select-control.is-open {
+  border: 1px solid #555 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+body.dark-theme .Select-control {
+  border: 1px solid #999 !important;
+}
+
+body.dark-theme .Select-control:hover,
+body.dark-theme .Select-control:focus,
+body.dark-theme .Select-control.is-focused,
+body.dark-theme .Select-control.is-open {
+  border: 1px solid #999 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Вложенные элементы внутри Select-control */
+.Select-control * {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+/* === Тёмная тема: фон меню и текст опций === */
+
+body.dark-theme .Select-menu-outer {
+  background-color: #333 !important; /* Тёмный фон выпадающего списка */
+  color: #fff !important;             /* Белый текст опций */
+  border: none !important;            /* Без лишней рамки */
+}
+
+body.dark-theme .Select-option {
+  background-color: #333 !important;  /* Тёмный фон каждой опции */
+  color: #fff !important;
+}
+
+body.dark-theme .Select-option.is-focused {
+  background-color: #555 !important;  /* Подсветка при наведении */
+  color: #fff !important;
+}
+
+/* === Заголовки выпадающих списков: жирный шрифт === */
+label {
+  font-weight: bold !important;
+}
+/* === Тёмная тема: закрытый селект — читаемый белый текст === */
+
+body.dark-theme .Select-control {
+  background-color: #222 !important;
+  color: #fff !important;
+}
+
+body.dark-theme .Select--single > .Select-control .Select-value,
+body.dark-theme .Select--single > .Select-control .Select-value-label {
+  color: #fff !important;
+}
+
+body.dark-theme .Select-placeholder {
+  color: #aaa !important;  /* Серый текст для placeholder */
+}
+
+/* Если внутри есть input — тоже сбрасываем */
+body.dark-theme .Select-control input {
+  color: #fff !important;
+}
+
+/* На всякий случай: всё внутри Select-control — белый текст */
+body.dark-theme .Select-control * {
+  color: #fff !important;
+}
+
+.tools-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.separator-line {
+  width: calc(100% + 60px);   /* 30px слева + 30px справа = 60px */
+  margin-left: -30px;          /* уводим влево на padding */
+  margin-right: -30px;         /* можно не указывать — left уже компенсирует */
+  border-top: 1px solid rgba(0,0,0,0.3);
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+body.dark-theme .separator-line {
+  border-top: 1px solid rgba(255,255,255,0.3);
+}
