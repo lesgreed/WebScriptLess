@@ -1,25 +1,23 @@
 /* ============================================================================
-   GLOBAL THEMES: Light & Dark
+   GLOBAL THEME (Light / Dark)
+   ----------------------------------------------------------------------------
+   Toggle by adding either .light-theme or .dark-theme to <body>.
 ============================================================================ */
-body.light-theme {
-  background-color: white;
-  color: black;
-}
+body.light-theme { background-color: #ffffff; color: #000000; }
+body.dark-theme  { background-color: #121212; color: #ffffff; }
 
-body.dark-theme {
-  background-color: #121212;
-  color: white;
-}
 
 /* ============================================================================
-   SIDEBAR: Container & Header
+   SIDEBAR
+   ----------------------------------------------------------------------------
+   Collapsible left sidebar with header and content areas.
 ============================================================================ */
 .sidebar {
   height: 100%;
-  width: 0;                /* Closed by default */
+  width: 0;                    /* closed by default, opened via JS */
   position: fixed;
   z-index: 1;
-  top: 0;
+  top: 1px;
   left: 0;
   overflow-x: hidden;
   transition: 0.3s;
@@ -29,7 +27,7 @@ body.dark-theme {
 .sidebar-content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Sliders at top, theme button at bottom */
+  justify-content: space-between;  /* sliders on top, theme toggle at bottom */
   align-items: stretch;
   height: 100%;
 }
@@ -50,26 +48,16 @@ body.dark-theme {
   margin: 0;
 }
 
-.light-sidebar {
-  background-color: #f1f1f1;
-  color: black;
-}
+.light-sidebar { background-color: #f1f1f1; color: #000; }
+.dark-sidebar  { background-color: #333;   color: #fff; }
+.dark-sidebar  .sidebar-title-inline { color: #fff; }
+.light-sidebar .sidebar-title-inline { color: #000; }
 
-.dark-sidebar {
-  background-color: #333;
-  color: white;
-}
-
-.dark-sidebar .sidebar-title-inline {
-  color: white;
-}
-
-.light-sidebar .sidebar-title-inline {
-  color: black;
-}
 
 /* ============================================================================
-   SIDEBAR BUTTONS: Open / Close
+   SIDEBAR TOGGLE BUTTONS
+   ----------------------------------------------------------------------------
+   Hamburger (open) and close buttons for the sidebar.
 ============================================================================ */
 .open-btn {
   font-size: 30px;
@@ -89,44 +77,42 @@ body.dark-theme {
   cursor: pointer;
   line-height: 1;
 }
+.close-btn:hover { color: #0056b3; }
 
-.close-btn:hover {
-  color: #0056b3;
-}
 
 /* ============================================================================
-   SLIDER BLOCK: Styles & Labels
+   SLIDER BLOCK
+   ----------------------------------------------------------------------------
+   Container and labels for sliders.
 ============================================================================ */
 .slider-block {
   display: flex;
   flex-direction: column;
-  gap: 20px;                    /* Space between sliders */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2); /* Light black with 20% opacity */
-  padding-bottom: 15px;         /* Push border line down */
-  margin-bottom: 20px;          /* Extra space below the whole block */
+  gap: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  padding-bottom: 15px;
+  margin-bottom: 20px;
 }
+body.dark-theme .slider-block { border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
 
-body.dark-theme .slider-block {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Light border for dark theme */
-}
 .slider-block label {
   font-size: 20px;
   font-weight: 600;
   color: inherit;
   margin-bottom: 4px;
   text-align: center;
-  
 }
+
 
 /* ============================================================================
    THEME SWITCH BUTTON
 ============================================================================ */
 .toggle-btn {
-  margin-top: auto;          /* Push to bottom */
+  margin-top: auto;
   margin-bottom: 20px;
-  align-self: stretch;       /* Full width inside sidebar */
+  align-self: stretch;
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -137,13 +123,11 @@ body.dark-theme .slider-block {
   margin-left: 20px;
   margin-right: 20px;
 }
+.toggle-btn:hover { background-color: #0056b3; }
 
-.toggle-btn:hover {
-  background-color: #0056b3;
-}
 
 /* ============================================================================
-   MAIN PAGE TITLE & WIP LABEL
+   HEADER & WIP LABEL
 ============================================================================ */
 .main-title {
   text-align: center;
@@ -163,102 +147,60 @@ body.dark-theme .slider-block {
   text-align: right;
 }
 
+
 /* ============================================================================
-   PAGE LAYOUT: Container & Panels
+   MAIN PAGE LAYOUT
+   ----------------------------------------------------------------------------
+   Three-column layout: settings panel, graph panel, logs.
 ============================================================================ */
 .page-container {
   display: flex;
   gap: 20px;
   padding: 20px;
-  height: calc(100vh - 100px);  /* фиксируем почти весь экран, кроме хедера */
+  height: calc(100vh - 100px);
   box-sizing: border-box;
 }
 
 
-
+/* ============================================================================
+   SETTINGS PANEL
+============================================================================ */
 .settings-panel {
-  flex: 0 0 200px;      /* фиксированная ширина */
-  height: 100%;         /* 100% высоты контейнера */
+  flex: 0 0 350px;        /* fixed width */
+  height: 99%;
   border-radius: 20px;
   overflow-y: auto;
-  padding: 20px;
+  padding: 30px;
+  box-sizing: border-box;
 }
+body.dark-theme .settings-panel { background-color: #222; color: #fff; }
+body.light-theme .settings-panel { background-color: #f1f1f1; color: #000; }
 
-body.dark-theme .settings-panel {
-  background-color: #222;
-  color: white;
-}
+/* Inputs inside the settings panel */
+body.dark-theme .settings-panel input { background-color: #222; color: #fff; border: 1px solid #555; }
 
-body.light-theme .settings-panel {
-  background-color: #f1f1f1;
-  color: black;
-}
 
+/* ============================================================================
+   GRAPH PANEL
+   ----------------------------------------------------------------------------
+   Centered graph/image area with theme-aware background.
+============================================================================ */
 .graph-panel {
-  flex: 1 1 auto;      /* занимает всё оставшееся */
-  height: 95.2%;        /* совпадает по высоте с остальными */
+  flex: 1 1 auto;
+  height: 95.2%;
   border-radius: 20px;
   overflow: hidden;
   padding: 20px;
-  background: #fff;
-  display: flex;  
-  justify-content: center; /* Горизонтальное центрирование */
-  align-items: center;     /* Вертикальное центрирование */
-}
-
-body.dark-theme .graph-panel {
-  background: #333;
-  color: white;
-}
-
-
-
-
-body.light-theme .graph-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: #ffffff;
-  color: black;
+  color: #000;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
+body.dark-theme .graph-panel { background-color: #333; color: #fff; }
 
-
-
-body.dark-theme .graph-panel {
-  background-color: #333;
-  color: white;
-}
-
-/* ============================================================================
-   BUILD GRAPH BUTTON
-============================================================================ */
-.build-graph-btn {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.build-graph-btn:hover {
-  background-color: #0056b3;
-}
-
-/* ============================================================================
-   GRAPH CANVAS & IMAGE
-============================================================================ */
-.graph-canvas {
-  width: 100%;
-  height: 400px;
-  border-radius: 15px;
-  background-color: #fff;
-}
-
-body.dark-theme .graph-canvas {
-  background-color: #333;
-}
-
+/* Graph image */
 #matrix-graph {
   max-width: 1000px;
   height: auto;
@@ -266,154 +208,34 @@ body.dark-theme .graph-canvas {
   margin: 0 auto;
 }
 
+
 /* ============================================================================
-   SLIDER COMPONENTS: rc-slider Track, Rail, Handle, Marks
+   GENERIC ACTION BUTTONS
 ============================================================================ */
-.rc-slider-track {
+.build-graph-btn {
+  padding: 10px 20px;
   background-color: #007bff;
-  height: 6px;
-}
-
-.rc-slider-rail {
-  background-color: #ccc;
-  height: 6px;
-}
-
-.rc-slider-handle {
-  height: 20px;
-  width: 20px;
-  margin-top: -7px;
-  opacity: 1 !important;
-  transition: none !important;
-}
-
-.rc-slider-handle:active {
-  border-color: #007bff;
-  background-color: #007bff;
-  box-shadow: none;
-  opacity: 1 !important;
-}
-
-.rc-slider-handle:hover,
-.rc-slider-handle:focus {
-  opacity: 1 !important;
-}
-
-.rc-slider-mark-text {
-  color: #000;
-  font-weight: bold;
-  opacity: 0.9;
-}
-
-body.dark-theme .rc-slider-mark-text {
   color: #fff;
-  opacity: 0.9;
-}
-
-
-/* ============================================================================
-   INPUT FIELDS: For Delta s, Delta J0, B0
-============================================================================ */
-.settings-panel {
-  flex: 0 0 350px;        /* Увеличил ширину */
-  height: 99%;
-  border-radius: 20px;
-  overflow-y: auto;
-  padding: 30px;          /* Больше внутренний отступ */
-  box-sizing: border-box;
-}
-
-
-body.dark-theme .settings-panel input {
-  background-color: #222;
-  color: #fff;
-  border: 1px solid #555;
-}
-
-
-/* ============================================================================
-   SIDEBAR INPUTS BELOW SLIDERS
-============================================================================ */
-/* === INLINE INPUTS STYLE === */
-/* Весь блок держит структуру столбиком */
-.inputs-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* отступ между парами */
-  margin-left: 20px; /* отступ от края */
-}
-
-/* Каждая пара в одну линию: label слева, input справа */
-.input-pair {
-  display: flex;
-  flex-direction: row; 
-  align-items: center;
-  gap: 7px; /* отступ между label и input */
-}
-
-/* Стили Label */
-.inline-label {
+  border: none;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: bold;
-  white-space: nowrap; /* не переносим текст */
+  cursor: pointer;
+  margin-top: 20px;
 }
+.build-graph-btn:hover { background-color: #0056b3; }
 
-/* Сами инпуты */
-.sidebar-input {
-  max-width: 70px; /* ограничиваем ширину */
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-
-/* === Console Panel === */
-.console-container {
-  flex: 0 0 500px;     /* фиксированная ширина */
-  height: 100%;        /* 100% высоты контейнера */
-  margin-top: -16px;   /* приподнимает блок вверх */
-}
-
-.console-panel {
-  height: 95%;        /* заполняет контейнер */
-  overflow-y: auto;    /* скролл для длинного текста */
-  font-weight: 100;
-  font-size: 18px;
-  border-radius: 15px;
-
-  font-family: monospace;
-  padding: 20px;
-  background: #f1f1f1;
-  white-space: pre-wrap;      /* перенос строк внутри <pre> */
-  word-wrap: break-word;      /* ломает длинные слова без пробелов */
-  overflow-x: hidden;         /* выключаем горизонтальный скролл */
-}
-
-body.dark-theme .console-panel {
-  background: #222;
-  color: #eee;
-}
-
-.Select-control {
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
-
-/* Блок для кнопок */
+/* Reusable large action buttons */
 .build-buttons {
   display: flex;
   flex-direction: column;
-  gap: 12px;           /* расстояние между кнопками */
-  margin-top: 20px;    /* отступ сверху от других элементов */
+  gap: 12px;
+  margin-top: 20px;
 }
-
-/* Каждая большая кнопка */
 .big-action-btn {
-  width: 100%;         /* на всю ширину контейнера */
-  padding: 12px 0;     /* отступы сверху/снизу, по бокам — сами растянутся */
-  background-color: #007bff; /* основной цвет */
-  color: white;
+  width: 100%;
+  padding: 12px 0;
+  background-color: #007bff;
+  color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -421,41 +243,72 @@ body.dark-theme .console-panel {
   cursor: pointer;
   text-align: center;
 }
+.big-action-btn:hover { background-color: #0056b3; }
 
-.big-action-btn:hover {
-  background-color: #0056b3;  /* темнее при наведении */
+
+/* ============================================================================
+   RC-SLIDER (Dash) OVERRIDES
+============================================================================ */
+.rc-slider-track { background-color: #007bff; height: 6px; }
+.rc-slider-rail  { background-color: #ccc;    height: 6px; }
+.rc-slider-handle {
+  height: 20px;
+  width: 20px;
+  margin-top: -7px;
+  opacity: 1 !important;
+  transition: none !important;
 }
-
-
-
-/* Make the react-select menu readable */
-.Select-menu-outer {
-  background-color: #fff;
-  color: #000;
-}
-
-body.dark-theme .Select-menu-outer {
-  background-color: #333;
-  color: #fff;
-}
-
-.Select-option {
-  background-color: inherit;
-  color: inherit;
-}
-
-.Select-option.is-focused {
+.rc-slider-handle:active {
+  border-color: #007bff;
   background-color: #007bff;
-  color: #fff;
+  box-shadow: none;
+  opacity: 1 !important;
 }
-/* === FORCE OVERRIDES FOR ALL react-select === */
+.rc-slider-handle:hover,
+.rc-slider-handle:focus { opacity: 1 !important; }
 
+.rc-slider-mark-text { color: #000; font-weight: bold; opacity: 0.9; }
+body.dark-theme .rc-slider-mark-text { color: #fff; opacity: 0.9; }
+
+
+/* ============================================================================
+   INLINE INPUTS (Δs, ΔJ0, B0) BELOW SLIDERS
+============================================================================ */
+.inputs-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 20px;
+}
+.input-pair {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+}
+.inline-label {
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.sidebar-input {
+  max-width: 70px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+
+/* ============================================================================
+   REACT-SELECT (Dash dcc.Dropdown) OVERRIDES
+============================================================================ */
 .Select-control {
-  border: 1px solid #555 !important; 
+  border-radius: 4px !important;
+  border: 1px solid #555 !important;
   box-shadow: none !important;
   outline: none !important;
   transition: none !important;
-  border-radius: 4px !important;
+  margin-bottom: 10px;
 }
 
 .Select-control:hover,
@@ -467,74 +320,42 @@ body.dark-theme .Select-menu-outer {
   outline: none !important;
 }
 
-body.dark-theme .Select-control {
-  border: 1px solid #999 !important;
-}
-
+body.dark-theme .Select-control { border: 1px solid #999 !important; }
 body.dark-theme .Select-control:hover,
 body.dark-theme .Select-control:focus,
 body.dark-theme .Select-control.is-focused,
 body.dark-theme .Select-control.is-open {
   border: 1px solid #999 !important;
-  box-shadow: none !important;
-  outline: none !important;
 }
 
-/* Вложенные элементы внутри Select-control */
 .Select-control * {
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
   background: transparent !important;
 }
-/* === Тёмная тема: фон меню и текст опций === */
 
-body.dark-theme .Select-menu-outer {
-  background-color: #333 !important; /* Тёмный фон выпадающего списка */
-  color: #fff !important;             /* Белый текст опций */
-  border: none !important;            /* Без лишней рамки */
-}
+.Select-menu-outer { background-color: #fff; color: #000; }
+body.dark-theme .Select-menu-outer { background-color: #333 !important; color: #fff !important; border: none !important; }
 
-body.dark-theme .Select-option {
-  background-color: #333 !important;  /* Тёмный фон каждой опции */
-  color: #fff !important;
-}
+.Select-option { background-color: inherit; color: inherit; }
+.Select-option.is-focused { background-color: #007bff; color: #fff; }
+body.dark-theme .Select-option { background-color: #333 !important; color: #fff !important; }
+body.dark-theme .Select-option.is-focused { background-color: #555 !important; color: #fff !important; }
 
-body.dark-theme .Select-option.is-focused {
-  background-color: #555 !important;  /* Подсветка при наведении */
-  color: #fff !important;
-}
+label { font-weight: bold !important; }
 
-/* === Заголовки выпадающих списков: жирный шрифт === */
-label {
-  font-weight: bold !important;
-}
-/* === Тёмная тема: закрытый селект — читаемый белый текст === */
-
-body.dark-theme .Select-control {
-  background-color: #222 !important;
-  color: #fff !important;
-}
-
+body.dark-theme .Select-control { background-color: #222 !important; color: #fff !important; }
 body.dark-theme .Select--single > .Select-control .Select-value,
-body.dark-theme .Select--single > .Select-control .Select-value-label {
-  color: #fff !important;
-}
+body.dark-theme .Select--single > .Select-control .Select-value-label { color: #fff !important; }
+body.dark-theme .Select-placeholder { color: #aaa !important; }
+body.dark-theme .Select-control input { color: #fff !important; }
+body.dark-theme .Select-control * { color: #fff !important; }
 
-body.dark-theme .Select-placeholder {
-  color: #aaa !important;  /* Серый текст для placeholder */
-}
 
-/* Если внутри есть input — тоже сбрасываем */
-body.dark-theme .Select-control input {
-  color: #fff !important;
-}
-
-/* На всякий случай: всё внутри Select-control — белый текст */
-body.dark-theme .Select-control * {
-  color: #fff !important;
-}
-
+/* ============================================================================
+   TOOLS PANEL / DIVIDERS
+============================================================================ */
 .tools-block {
   display: flex;
   flex-direction: column;
@@ -542,14 +363,124 @@ body.dark-theme .Select-control * {
   margin-top: 20px;
 }
 .separator-line {
-  width: calc(100% + 60px);   /* 30px слева + 30px справа = 60px */
-  margin-left: -30px;          /* уводим влево на padding */
-  margin-right: -30px;         /* можно не указывать — left уже компенсирует */
+  width: calc(100% + 60px);
+  margin-left: -30px;
+  margin-right: -30px;
   border-top: 1px solid rgba(0,0,0,0.3);
   margin-top: 20px;
   margin-bottom: 20px;
 }
+body.dark-theme .separator-line { border-top: 1px solid rgba(255,255,255,0.3); }
 
-body.dark-theme .separator-line {
-  border-top: 1px solid rgba(255,255,255,0.3);
+
+/* ============================================================================
+   CONSOLE (HEADER + LOG)
+   ----------------------------------------------------------------------------
+   Two stacked blocks: header (welcome/config) and log (runtime messages).
+============================================================================ */
+.console-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 930px;
+  margin-top: 4px;
+  width: 420px; 
+  max-width: 420px;
 }
+
+.console-block {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.console-header { flex: 1 1 40%; color: #444; }
+.console-log    { flex: 1 1 60%; line-height: 1.5; color: #000; }
+
+.light-theme .console-header,
+.light-theme .console-log { background-color: #fff; color: #000; }
+
+.dark-theme .console-header,
+.dark-theme .console-log { background-color: #1e1e1e; color: #ddd; }
+
+.console-container .console-header { font-size: 16px !important;  }
+.console-container .console-log    { font-size: 16px !important; line-height: 1.5 !important; }
+
+/* Dark theme scrollbars */
+.dark-theme .console-log::-webkit-scrollbar,
+.dark-theme .console-header::-webkit-scrollbar { width: 8px; }
+.dark-theme .console-log::-webkit-scrollbar-track,
+.dark-theme .console-header::-webkit-scrollbar-track { background: #1e1e1e; }
+.dark-theme .console-log::-webkit-scrollbar-thumb,
+.dark-theme .console-header::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
+/* Firefox */
+.dark-theme .console-log,
+.dark-theme .console-header { scrollbar-color: #444 #1e1e1e; }
+
+
+/* ===== Pipeline Card ===== */
+.action-card {
+  background: var(--card-bg, #fff);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+.dark-theme .action-card {
+  --card-bg: #1e1e1e;
+  border-color: rgba(255,255,255,.08);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.action-card__title {
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-card__note {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  opacity: .8;
+  line-height: 1.45;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .action-row { grid-template-columns: 1fr; }
+}
+
+.action-card .big-action-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.action-card__hint {
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: .7;
+}
+
+/* делаем “кнопочные” лоадеры аккуратными */
+#loading-precalc > div, #build_std > div {
+  width: 100%;
+}
+
+
