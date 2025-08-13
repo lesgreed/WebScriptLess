@@ -19,6 +19,7 @@ from flask import request
 import uuid
 import base64, tempfile, os
 import re  
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # ==========================================================
 # Server
@@ -69,6 +70,7 @@ _H5_NAMES = [
     "diag_types",             # [11] strings
     "config_tags",            # [12] 
     "b0_tags",                # [13] 
+    "angle_tags",             # [14]
 ]
 
 def _to_numeric_ndarray(x):
@@ -102,6 +104,32 @@ def _save_numeric_list_group(h5, group_name, seq):
         arr = _to_numeric_ndarray(entry)
         grp.create_dataset(str(i), data=arr, compression="gzip", shuffle=True, chunks=True)
 
+def infer_wf_cell_shape(data) -> tuple | None:
+    """
+    Return WF cell shape as (H, W) using data_full[10].
+    - If WF is 2D -> (H, W)
+    - If WF is 1D of length N -> treat as (N, N)
+    - On failure -> None
+    """
+    try:
+        wf = None
+        # expected: data[10] == [ wf_list ]
+        if isinstance(data, list) and len(data) > 10:
+            cont = data[10]
+            if isinstance(cont, list) and len(cont) > 0 and isinstance(cont[0], list) and cont[0]:
+                wf = cont[0][0]
+            elif isinstance(cont, list) and cont:
+                wf = cont[0]
+        if wf is None:
+            return None
+        arr = np.asarray(wf)
+        if arr.ndim >= 2:
+            return int(arr.shape[0]), int(arr.shape[1])
+        n = int(arr.size)
+        return n, n
+    except Exception:
+        return None
+    
 def _load_string_list(h5, name):
     """Read a string dataset robustly (UTF-8), handling bytes/scalars/arrays."""
     if name not in h5:
@@ -138,30 +166,25 @@ def save_data_full_h5(path, data_full):
         WF: if your app uses data_full[10] as [ wf_list ], we will flatten to wf_list for storage,
         and restore to [ wf_list ] when loading.
     """
-    if not isinstance(data_full, list) or len(data_full) < 14:
-        raise ValueError("data_full must be a list of length >= 12")
-
+    if not isinstance(data_full, list) or len(data_full) < 15:
+        raise ValueError("data_full must be a list of length >= 15")
     with h5py.File(path, "w") as h5:
         h5.attrs["schema_version"] = 3
-        # Strings
-        _save_string_list(h5, _H5_NAMES[0], data_full[0])   # nbi_names
-        _save_string_list(h5, _H5_NAMES[1], data_full[1])   # port_names
-        _save_string_list(h5, _H5_NAMES[11], data_full[11]) # diag_types
+        _save_string_list(h5, _H5_NAMES[0],  data_full[0])
+        _save_string_list(h5, _H5_NAMES[1],  data_full[1])
+        _save_string_list(h5, _H5_NAMES[11], data_full[11])
         _save_string_list(h5, _H5_NAMES[12], data_full[12])
         _save_string_list(h5, _H5_NAMES[13], data_full[13])
+        _save_string_list(h5, _H5_NAMES[14], data_full[14])  # ← NEW
 
-        # Numeric groups (2..9 and 10)
         for idx in range(2, 10):
             _save_numeric_list_group(h5, _H5_NAMES[idx], data_full[idx])
 
-        # WF: support both formats: either [ wf_list ] or wf_list itself
         wf_container = data_full[10]
         if isinstance(wf_container, list) and len(wf_container) > 0 and isinstance(wf_container[0], (list, tuple)):
-            wf_list = wf_container[0]
-            h5.attrs["wf_nested"] = True
+            wf_list = wf_container[0]; h5.attrs["wf_nested"] = True
         else:
-            wf_list = wf_container
-            h5.attrs["wf_nested"] = False
+            wf_list = wf_container;    h5.attrs["wf_nested"] = False
         _save_numeric_list_group(h5, _H5_NAMES[10], wf_list)
 
 def load_data_full_h5(path):
@@ -170,31 +193,27 @@ def load_data_full_h5(path):
     Reconstructs the exact structure, including WF nesting as [ wf_list ].
     For older files (without config_tags/b0_tags), fills with blanks of proper length.
     """
-    data_full = [[] for _ in range(14)]  # 0..13
+    data_full = [[] for _ in range(15)]  # 0..14
     with h5py.File(path, "r") as h5:
-
-        data_full[0]  = _load_string_list(h5, _H5_NAMES[0])   # nbi_names
-        data_full[1]  = _load_string_list(h5, _H5_NAMES[1])   # port_names
-        data_full[11] = _load_string_list(h5, _H5_NAMES[11])  # diag_types
-
+        data_full[0]  = _load_string_list(h5, _H5_NAMES[0])
+        data_full[1]  = _load_string_list(h5, _H5_NAMES[1])
+        data_full[11] = _load_string_list(h5, _H5_NAMES[11])
 
         for idx in range(2, 10):
             data_full[idx] = _load_numeric_list_group(h5, _H5_NAMES[idx])
-
 
         wf_list = _load_numeric_list_group(h5, _H5_NAMES[10])
         nested = bool(h5.attrs.get("wf_nested", True))
         data_full[10] = [wf_list] if nested else wf_list
 
-
         data_full[12] = _load_string_list(h5, _H5_NAMES[12]) if _H5_NAMES[12] in h5 else []
         data_full[13] = _load_string_list(h5, _H5_NAMES[13]) if _H5_NAMES[13] in h5 else []
-
+        data_full[14] = _load_string_list(h5, _H5_NAMES[14]) if _H5_NAMES[14] in h5 else []
 
     ports_n = len(data_full[1]) if isinstance(data_full[1], list) else 0
-    data_full[12] = (data_full[12] + [""] * ports_n)[:ports_n]
-    data_full[13] = (data_full[13] + [""] * ports_n)[:ports_n]
-
+    for idx in (12, 13, 14):
+        lst = data_full[idx] if isinstance(data_full[idx], list) else []
+        data_full[idx] = (lst + [""] * ports_n)[:ports_n]
     return data_full
 
 # ==========================================================
@@ -294,31 +313,48 @@ def make_config_tag_from_filename(path_or_name: str) -> str:
 def make_b0_tag(b0) -> str:
     """Format B₀ value for display."""
     try:
-        return f"B₀={float(b0):.2f} T"
+        return f"B₀={float(b0):.2f}T"
     except Exception:
         return "B₀=?"
 
 
-def build_current_config_message(port_names, device_names, diag_types=None, config_tags=None, b0_tags=None):
+def build_current_config_message(
+    port_names,
+    device_names,
+    diag_types=None,
+    config_tags=None,
+    b0_tags=None,
+    angle_tags=None,
+    wf_shape=None,
+):
     """
-    Build a formatted 'Current Matrix Configuration' message.
-    Adds per-port config tag and B0 tag when available.
+    Build 'Current Matrix Configuration' block.
+    Adds per-port config/B0/angle tags and optional WF cell size line.
     """
     lines = [welcome_message, ""]
 
     if not port_names or not device_names:
-        lines += ["📌 Current Matrix Configuration:", "  ⚠️ No ports loaded. Please Precalculate or Add ports."]
+        lines += [
+            "📌 Current Matrix Configuration:",
+            "  ⚠️ No ports loaded. Please Precalculate or Add ports.",
+        ]
         return "\n".join(lines)
 
     labels = format_port_labels(port_names, device_names)
+
+    # Optional cell size line
+    if wf_shape and len(wf_shape) == 2:
+        lines.append(f"🧩 Cell grid: {wf_shape[0]}×{wf_shape[0]}")
+
     lines.append("📌 Current Matrix Configuration:")
 
     n = len(labels)
     for i in range(n):
         diag = f" ({str(diag_types[i]).strip()})" if diag_types and i < len(diag_types) and diag_types[i] else ""
-        cfg  = f" — {str(config_tags[i]).strip()}" if config_tags and i < len(config_tags) and config_tags[i] else ""
+        cfg  = f" {str(config_tags[i]).strip()}" if config_tags and i < len(config_tags) and config_tags[i] else ""
         b0   = f"; {str(b0_tags[i]).strip()}"     if b0_tags and i < len(b0_tags) and b0_tags[i] else ""
-        lines.append(f"  • {labels[i]}{diag}{cfg}{b0}")
+        ang  = f"; {str(angle_tags[i]).strip()}"  if angle_tags and i < len(angle_tags) and angle_tags[i] else ""
+        lines.append(f" • {labels[i]}{diag}{cfg}{b0}{ang}")
 
     return "\n".join(lines)
 
@@ -876,7 +912,7 @@ def build_graph_with_precalc(is_running, is_running_build, angle, matrix_size, b
         return logs, False, False, False, lines
 
     # --- Initialize base data array ---
-    data_full = [[] for _ in range(14)]
+    data_full = [[] for _ in range(15)]
     data_full[0] = ["NBI_7", "NBI_7", "NBI_7", "NBI_8", "NBI_8", "NBI_8"]
     data_full[1] = ["2_1_AEA", "2_1_AEM", "2_1_AET", "2_1_AEA", "2_1_AEM", "2_1_AET"]
     data_full[11] = ["FIDA"] * 6
@@ -898,15 +934,21 @@ def build_graph_with_precalc(is_running, is_running_build, angle, matrix_size, b
         b0_tags     = [b0_tag]  * num_ports
 
         # indices [12] and [13]
+        angle_tag = f"θ={angle}°"
+        angle_tags = [angle_tag] * num_ports
         result_array.append(config_tags)
         result_array.append(b0_tags)
+        result_array.append(angle_tags)
 
         # header with config & B0
+        wf_shape = infer_wf_cell_shape(result_array)
         lines = build_current_config_message(
             result_array[1], result_array[0],
             diag_types=result_array[11],
             config_tags=result_array[12],
             b0_tags=result_array[13],
+            angle_tags=result_array[14],
+            wf_shape=wf_shape,
         )
     except Exception as e:
         result_array = None
@@ -920,24 +962,80 @@ def build_graph_with_precalc(is_running, is_running_build, angle, matrix_size, b
 
 
 # ==========================================================
-# Python callback: Build Graph 
+# ⚙️ Settings for the matrix builder
 # ==========================================================
+# If your metric M(i,j) == M(j,i), keep True and we fill only the upper triangle and mirror it.
+# If your metric is NOT symmetric, set to False (we will compute full N×N).
+SYMMETRIC_METRIC = True
 
+# How many worker processes to use for pair computations
+PAIR_WORKERS = 5
+
+# ==========================================================
+# 🧱 Top-level worker (picklable) — minimizes multiprocessing overhead
+# ==========================================================
+def _pair_worker(args):
+    """
+    Top-level worker to minimize pickling overhead.
+
+    args = (mode, i, j, payload, delta_j0, delta_s)
+      - mode: "ram" | "h5"
+      - i, j: pair indices
+      - payload:
+          * for "ram": (wf_list, data_full)
+          * for "h5":  (h5_path, meta_obj)  # meta_obj can be the dict payload or any small object
+      - delta_j0, delta_s: computation tweaks
+
+    returns: (i, j, MATRIX)
+    """
+    mode, i, j, payload, delta_j0, delta_s = args
+
+    if mode == "ram":
+        wf_list, data_full = payload
+        wf_i = wf_list[i]
+        wf_j = wf_list[j]
+        # API: calc.compute_matrix((i,j,wf_i,wf_j), all_results, delta_j0, delta_s) -> (i, j, MATRIX, meta)
+        i_, j_, M, _ = calc.compute_matrix((i, j, wf_i, wf_j), data_full, delta_j0, delta_s)
+        return i_, j_, M
+
+    elif mode == "h5":
+        h5_path, meta_obj = payload
+        import h5py, numpy as np
+        with h5py.File(h5_path, "r") as h5:
+            wf_i = np.array(h5["WF"][str(i)])
+            wf_j = np.array(h5["WF"][str(j)])
+        i_, j_, M, _ = calc.compute_matrix((i, j, wf_i, wf_j), meta_obj, delta_j0, delta_s)
+        return i_, j_, M
+
+    else:
+        raise ValueError("Unknown mode for _pair_worker")
+
+
+# ==========================================================
+# 🟢 Python callback: arm "Build Grid"
+# ==========================================================
 @app.callback(
     Output("precalc-flag", "data", allow_duplicate=True),
     Input("build-standard-btn", "n_clicks"),
     State("precalc-flag", "data"),
     prevent_initial_call=True
 )
-def set_build_flag(_, is_running):
-    """
-    Arm the 'Build Grid' step when the button is pressed,
-    but only if there isn't an active build already.
-    """
+def set_build_flag(n_clicks, is_running):
+    """Set the build flag unless a build is already running."""
     if is_running:
         raise dash.exceptions.PreventUpdate
     return True
 
+
+# ==========================================================
+# 🟢 Python callback: Build matrix image (fast path, RAM or HDF5-lazy)
+#   - Computes only upper triangle (if symmetric) and mirrors it
+#   - Renders a single big imshow instead of N^2 subplots
+#   - Uses a top-level worker to reduce pickling overhead
+# ==========================================================
+# ==========================================================
+# 🟢 Python callback: Build matrix image (fast; RAM & HDF5-lazy)
+# ==========================================================
 @app.callback(
     Output("matrix-graph", "src"),
     Output("log-list-store", "data", allow_duplicate=True),
@@ -954,113 +1052,287 @@ def set_build_flag(_, is_running):
     prevent_initial_call=True,
 )
 def build_matrix_and_update(is_running, delta_j0, delta_s, trgr):
-    """
-    Build the WF cross-matrix plot:
-      1) Read precalculated data from cache
-      2) Clean None → NaN for numeric arrays
-      3) Compute the full pairwise matrix in parallel
-      4) Render a composite image and return it as base64
-      5) Log the current configuration using helper builders
-    """
     if not is_running:
         raise dash.exceptions.PreventUpdate
 
-    # --- Load data from cache ---
-    data = cache.get(user_cache_key("user_result_array"))
-    if data is None:
-        logs = ["❗ Data not precalculated. Please run Precalculate first."]
-        return dash.no_update, logs, False, None, None, False, False, trgr
-
-    # --- Helpers: replace None with NaN for numeric safety ---
-    def replace_none_with_nan(arr_list):
-        return [
-            np.array([x if x is not None else np.nan for x in row], dtype=float)
-            for row in arr_list
-        ]
-
-    # Normalize J0 and WF containers
-    data[9] = replace_none_with_nan(data[9])
-    if data[10] and isinstance(data[10], list) and len(data[10]) > 0:
-        wf_list = data[10][0]
-        data[10][0] = [
-            (np.where(np.equal(wf, None), np.nan, wf).astype(float, copy=False)
-            if isinstance(wf, np.ndarray)
-            else np.array([np.nan if v is None else v for v in wf], dtype=float))
-            for wf in wf_list
-        ]
-
-    # --- Extract inputs for matrix build ---
-    wf_sets = data[10][0]          # list of WF arrays per port
-    port_names = data[1]           # e.g., ["2_1_AEA", ...]
-    device_names = data[0]         # e.g., ["NBI_7", ...]
-    num_arrays = len(wf_sets)
-
     logs = []
 
-    # --- Prepare figure and containers ---
-    fig, axs = plt.subplots(num_arrays, num_arrays, figsize=(10, 10))
-    matrix_cells = np.empty((num_arrays, num_arrays), dtype=object)
+    # helpers / settings (safe defaults if not defined globally)
+    SYMMETRIC = bool(globals().get("SYMMETRIC_METRIC", True))
+    PAIR_WORKERS = int(globals().get("PAIR_WORKERS", 5))
 
-    # Build argument lists for the parallel compute
-    args_list = [(i, j, wf_sets[i], wf_sets[j]) for i in range(num_arrays) for j in range(num_arrays)]
-    all_results_list = [data] * len(args_list)
-    delta_j0_list = [delta_j0] * len(args_list)
-    delta_s_list = [delta_s] * len(args_list)
+    def _is_h5(payload):
+        return isinstance(payload, dict) and payload.get("mode") == "h5" and "path" in payload
 
-    # --- Compute matrix in parallel (process pool) ---
-    with ProcessPoolExecutor(max_workers=5) as executor:
-        results = list(executor.map(calc.compute_matrix, args_list, all_results_list, delta_j0_list, delta_s_list))
+    def _utf8_list(x):
+        return [str(s) for s in (x or [])]
 
-    for i, j, matrix, _ in results:
-        matrix_cells[i, j] = matrix
+    # ---- read dataset from cache
+    data_obj = cache.get(user_cache_key("user_result_array"))
+    if data_obj is None:
+        logs = ["❗ Data not precalculated/loaded. Please run Precalculate or upload results first."]
+        return dash.no_update, logs, False, None, None, False, False, trgr
 
-    # --- Plot heatmap grid (thread pool for snappy rendering) ---
-    vmin, vmax = -1, 3.5
+    # =============== RAM MODE ===============
+    if isinstance(data_obj, list):
+        data = data_obj
 
-    def plot_subplot(i, j, mat):
-        ax = axs[i, j]
-        im = ax.imshow(mat, cmap="jet", origin="upper", aspect="auto", vmin=vmin, vmax=vmax)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        return im
+        # normalize J0: list of arrays, None -> NaN
+        def _replace_none_with_nan(arr_list):
+            return [
+                np.array([x if x is not None else np.nan for x in row], dtype=float)
+                for row in arr_list
+            ]
+        if len(data) > 9 and isinstance(data[9], list):
+            data[9] = _replace_none_with_nan(data[9])
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        ims = list(executor.map(
-            lambda args: plot_subplot(*args),
-            [(i, j, matrix_cells[i, j]) for i in range(num_arrays) for j in range(num_arrays)]
-        ))
+        # normalize WF (only inside data[10][0])
+        if len(data) > 10 and isinstance(data[10], list) and len(data[10]) > 0:
+            wf_list = data[10][0]
+            data[10][0] = [
+                (np.where(np.equal(wf, None), np.nan, wf).astype(float, copy=False)
+                 if isinstance(wf, np.ndarray)
+                 else np.array([np.nan if v is None else v for v in wf], dtype=float))
+                for wf in wf_list
+            ]
+        else:
+            logs.append("❗ WF container is empty.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
 
-    # --- Axis labels using our shared formatter ---
-    # Build compact labels like "21AEM.S8" consistently across app
-    labels = format_port_labels(port_names, device_names)
-    tick_font = 6 if num_arrays >= 11 else 9
+        wf_sets = data[10][0]
+        num_arrays = len(wf_sets)
+        if num_arrays == 0:
+            logs.append("❗ No WF entries to plot.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
 
-    for i, lbl in enumerate(labels):
-        axs[num_arrays - 1, i].set_xlabel(lbl, fontsize=tick_font)
-        axs[i, 0].set_ylabel(lbl, fontsize=tick_font)
+        # pair list (upper triangle if symmetric)
+        if SYMMETRIC:
+            pairs = [(i, j) for i in range(num_arrays) for j in range(i, num_arrays)]
+        else:
+            pairs = [(i, j) for i in range(num_arrays) for j in range(num_arrays)]
 
-    # --- Colorbar & layout ---
-    cax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-    plt.colorbar(axs[0, 0].images[0], cax=cax)
-    plt.subplots_adjust(wspace=0.0, hspace=0.0)
+        # prepare jobs for top-level worker
+        payload = (wf_sets, data)  # small payload; big arrays taken by index inside worker
+        jobs = [("ram", i, j, payload, delta_j0, delta_s) for (i, j) in pairs]
+        chunksize = max(1, len(jobs) // (PAIR_WORKERS * 4))
 
-    # --- Encode figure to base64 data URI ---
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=1500, bbox_inches="tight")
-    buf.seek(0)
-    encoded = base64.b64encode(buf.read()).decode("utf-8")
-    buf.close()
-    plt.close(fig)
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=PAIR_WORKERS) as ex:
+            results = list(ex.map(_pair_worker, jobs, chunksize=chunksize))
 
-    img_src = f"data:image/png;base64,{encoded}"
+        # assemble big image BEFORE imshow
+        if not results:
+            logs.append("❗ Pair computation returned no tiles.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
 
-    # Logs
-    logs.append("✅ Matrix plot generated successfully.")
-    logs.append("📌 Current Matrix Configuration:")
-    logs.extend(f"  • {lbl}" for lbl in labels)
+        try:
+            H, W = results[0][2].shape
+        except Exception as e:
+            logs.append(f"❗ Unexpected tile shape: {e}")
+            return dash.no_update, logs, False, None, None, False, False, trgr
 
-    # Reset both flags; bump cache trigger to refresh any dependents
-    return img_src, logs, False, None, None, False, False, trgr + 1
+        N = num_arrays
+        big_img = np.full((N * H, N * W), np.nan, dtype=float)
+        for (i, j, M) in results:
+            if M.shape != (H, W):
+                hh = min(H, M.shape[0]); ww = min(W, M.shape[1])
+                big_img[i*H:i*H+hh, j*W:j*W+ww] = M[:hh, :ww]
+                if SYMMETRIC and i != j:
+                    big_img[j*H:j*H+hh, i*W:i*W+ww] = M[:hh, :ww]
+            else:
+                big_img[i*H:(i+1)*H, j*W:(j+1)*W] = M
+                if SYMMETRIC and i != j:
+                    big_img[j*H:(j+1)*H, i*W:(i+1)*W] = M
+
+        # labels
+        port_names = _utf8_list(data[1])
+        device_names = _utf8_list(data[0])
+        cfgs = _utf8_list(data[12]) if len(data) > 12 else [""] * len(port_names)
+        b0s  = _utf8_list(data[13]) if len(data) > 13 else [""] * len(port_names)
+        labels = format_port_labels(port_names[:N], device_names[:N])
+        tick_font = 6 if N >= 11 else 9
+
+        # figure & render (square pixels; aligned colorbar)
+        data_aspect = (N * W) / (N * H)
+        fig_h = 9.0
+        fig_w = fig_h * data_aspect + 1.0
+        fig, ax = plt.subplots(1, 1, figsize=(fig_w, fig_h))
+        im = ax.imshow(big_img, cmap="jet", origin="upper", vmin=-1, vmax=3.5, interpolation="nearest")
+        ax.set_aspect("equal", adjustable="box")
+
+        ax.set_xticks([(k + 0.5) * W for k in range(N)])
+        ax.set_yticks([(k + 0.5) * H for k in range(N)])
+        ax.set_xticklabels(labels, rotation=0, fontsize=tick_font, fontweight="bold")
+        ax.tick_params(axis="x", pad=2)
+        ax.set_yticklabels(labels, fontsize=tick_font, fontweight="bold")
+
+        for k in range(1, N):
+            ax.axhline(k * H - 0.5, linewidth=0.3)
+            ax.axvline(k * W - 0.5, linewidth=0.3)
+
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="3%", pad=0.25)
+        cbar = plt.colorbar(im, cax=cax)
+        cbar.ax.tick_params(labelsize=tick_font, width=1.0)
+        for t in cbar.ax.get_yticklabels():
+            t.set_fontweight("bold")
+
+        plt.subplots_adjust(left=0.10, right=0.92, bottom=0.09, top=0.98)
+
+        # encode image
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=600)
+        buf.seek(0)
+        encoded = base64.b64encode(buf.read()).decode("utf-8")
+        buf.close()
+        plt.close(fig)
+        img_src = f"data:image/png;base64,{encoded}"
+
+        # logs (+ config & B0 tags)
+        logs.append("✅ Matrix plot generated successfully.")
+        logs.append("📌 Current Matrix Configuration:")
+        for i, lbl in enumerate(labels):
+            cfg = f" — {cfgs[i]}" if i < len(cfgs) and cfgs[i] else ""
+            b0t = f"; {b0s[i]}" if i < len(b0s) and b0s[i] else ""
+            logs.append(f"  • {lbl}{cfg}{b0t}")
+
+        # persist build params
+        dj = None if delta_j0 is None else float(delta_j0)
+        ds = None if delta_s  is None else float(delta_s)
+        cache.set(user_cache_key("last_build_params"), {"delta_j0": dj, "delta_s": ds})
+        _fmt = lambda v: "—" if v is None else f"{v:.4g}"
+        logs.append(f"🔧 Build params: ΔJ₀={_fmt(dj)}; Δs={_fmt(ds)}")
+
+        return img_src, logs, False, None, None, False, False, (trgr or 0) + 1
+
+    # =============== HDF5-LAZY MODE ===============
+    else:
+        if not _is_h5(data_obj):
+            logs.append("❗ Unknown dataset format in cache.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
+
+        path = data_obj["path"]
+
+        # load labels/tags and WF keys
+        import h5py
+        def _load_strings(h5, name):
+            if name not in h5: return []
+            raw = h5[name][()]
+            arr = np.atleast_1d(raw)
+            out = []
+            for v in arr:
+                if isinstance(v, (bytes, np.bytes_)):
+                    out.append(v.decode("utf-8", errors="replace"))
+                else:
+                    out.append(str(v))
+            return out
+
+        try:
+            with h5py.File(path, "r") as h5:
+                ports = _load_strings(h5, "port_names")
+                nbi   = _load_strings(h5, "nbi_names")
+                cfgs  = _load_strings(h5, "config_tags") if "config_tags" in h5 else [""] * len(ports)
+                b0s   = _load_strings(h5, "b0_tags")     if "b0_tags" in h5     else [""] * len(ports)
+                wf_keys = sorted((int(k) for k in h5["WF"].keys())) if "WF" in h5 else []
+        except Exception as e:
+            logs.append(f"❌ Failed to read HDF5 meta: {e}")
+            return dash.no_update, logs, False, None, None, False, False, trgr
+
+        num_arrays = len(wf_keys)
+        if num_arrays == 0:
+            logs.append("❗ WF group is empty. Nothing to plot.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
+
+        if SYMMETRIC:
+            pairs = [(i, j) for i in range(num_arrays) for j in range(i, num_arrays)]
+        else:
+            pairs = [(i, j) for i in range(num_arrays) for j in range(num_arrays)]
+
+        payload = (path, data_obj)
+        jobs = [("h5", i, j, payload, delta_j0, delta_s) for (i, j) in pairs]
+        chunksize = max(1, len(jobs) // (PAIR_WORKERS * 4))
+
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=PAIR_WORKERS) as ex:
+            results = list(ex.map(_pair_worker, jobs, chunksize=chunksize))
+
+        if not results:
+            logs.append("❗ Pair computation returned no tiles.")
+            return dash.no_update, logs, False, None, None, False, False, trgr
+
+        try:
+            H, W = results[0][2].shape
+        except Exception as e:
+            logs.append(f"❗ Unexpected tile shape: {e}")
+            return dash.no_update, logs, False, None, None, False, False, trgr
+
+        N = num_arrays
+        big_img = np.full((N * H, N * W), np.nan, dtype=float)
+        for (i, j, M) in results:
+            if M.shape != (H, W):
+                hh = min(H, M.shape[0]); ww = min(W, M.shape[1])
+                big_img[i*H:i*H+hh, j*W:j*W+ww] = M[:hh, :ww]
+                if SYMMETRIC and i != j:
+                    big_img[j*H:j*H+hh, i*W:i*W+ww] = M[:hh, :ww]
+            else:
+                big_img[i*H:(i+1)*H, j*W:(j+1)*W] = M
+                if SYMMETRIC and i != j:
+                    big_img[j*H:(j+1)*H, i*W:(i+1)*W] = M
+
+        labels = format_port_labels(ports[:N], nbi[:N])
+        tick_font = 6 if N >= 11 else 9
+
+        data_aspect = (N * W) / (N * H)
+        fig_h = 9.0
+        fig_w = fig_h * data_aspect + 1.0
+        fig, ax = plt.subplots(1, 1, figsize=(fig_w, fig_h))
+        im = ax.imshow(big_img, cmap="jet", origin="upper", vmin=-1, vmax=3.5, interpolation="nearest")
+        ax.set_aspect("equal", adjustable="box")
+
+        ax.set_xticks([(k + 0.5) * W for k in range(N)])
+        ax.set_yticks([(k + 0.5) * H for k in range(N)])
+        ax.set_xticklabels(labels, rotation=0, fontsize=tick_font, fontweight="bold")
+        ax.tick_params(axis="x", pad=2)
+        ax.set_yticklabels(labels, fontsize=tick_font, fontweight="bold")
+
+        for k in range(1, N):
+            ax.axhline(k * H - 0.5, linewidth=0.3)
+            ax.axvline(k * W - 0.5, linewidth=0.3)
+
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="3%", pad=0.25)
+        cbar = plt.colorbar(im, cax=cax)
+        cbar.ax.tick_params(labelsize=tick_font, width=1.0)
+        for t in cbar.ax.get_yticklabels():
+            t.set_fontweight("bold")
+
+        plt.subplots_adjust(left=0.10, right=0.92, bottom=0.09, top=0.98)
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=600)
+        buf.seek(0)
+        encoded = base64.b64encode(buf.read()).decode("utf-8")
+        buf.close()
+        plt.close(fig)
+        img_src = f"data:image/png;base64,{encoded}"
+
+        logs.append("✅ Matrix plot generated successfully (HDF5 lazy mode).")
+        logs.append("📌 Current Matrix Configuration:")
+        for i, lbl in enumerate(labels):
+            cfg = f" — {cfgs[i]}" if i < len(cfgs) and cfgs[i] else ""
+            b0t = f"; {b0s[i]}" if i < len(b0s) and b0s[i] else ""
+            logs.append(f"  • {lbl}{cfg}{b0t}")
+
+        dj = None if delta_j0 is None else float(delta_j0)
+        ds = None if delta_s  is None else float(delta_s)
+        cache.set(user_cache_key("last_build_params"), {"delta_j0": dj, "delta_s": ds})
+        _fmt = lambda v: "—" if v is None else f"{v:.4g}"
+        logs.append(f"🔧 Build params: ΔJ₀={_fmt(dj)}; Δs={_fmt(ds)}")
+
+        return img_src, logs, False, None, None, False, False, (trgr or 0) + 1
+    
 
 
 # ==========================================================
@@ -1089,47 +1361,45 @@ def init_header(_):
 )
 def update_log_output(new_logs, existing_text):
     """
-    Prepend new log lines (with timestamps) to the existing console text.
-    - Accepts either list[str] or str for `new_logs`
-    - Removes the static welcome message from the rolling log once
-    - Keeps the log size under control by trimming to the last N lines
+    Prepend new log lines to the console.
+    - Only the FIRST line of each incoming batch gets a [HH:MM:SS] timestamp.
+    - Following lines in the same batch have no timestamp.
     """
     from datetime import datetime
 
     if not new_logs:
         raise dash.exceptions.PreventUpdate
 
-    # --- Normalize inputs ---
+    # normalize input -> list[str]
     if isinstance(new_logs, str):
-        # Split multiline string into lines
         new_logs = [line for line in new_logs.splitlines() if line.strip()]
     else:
-        # Ensure list of non-empty strings
         new_logs = [str(line).strip() for line in new_logs if str(line).strip()]
-
     if not new_logs:
         raise dash.exceptions.PreventUpdate
 
     existing_text = existing_text or ""
 
-    # --- Remove welcome block if it slipped into the rolling log previously ---
+    # drop welcome block from rolling log if present
     if welcome_message.strip() in existing_text:
         existing_text = existing_text.replace(welcome_message.strip(), "").strip()
 
-    # --- Timestamped prefix for each new line ---
     ts = datetime.now().strftime("[%H:%M:%S]")
-    new_chunk = "\n".join(f"{ts} {line}" for line in new_logs)
+    first = f"{ts} {new_logs[0]}"
+    rest  = "\n".join(new_logs[1:]) if len(new_logs) > 1 else ""
+    new_chunk = first + ("\n" + rest if rest else "")
 
-    # --- Prepend new lines to old content ---
+    # prepend
     updated = (new_chunk + ("\n\n" + existing_text if existing_text else "")).strip()
 
-    # --- (Optional) Trim the console to last N lines to avoid runaway growth ---
-    MAX_LINES = 200  # tune as you like
+    # trim to last N lines to keep console light
+    MAX_LINES = 200
     lines = updated.splitlines()
     if len(lines) > MAX_LINES:
-        updated = "\n".join(lines[:MAX_LINES])  # we keep the newest first (prepended)
+        updated = "\n".join(lines[:MAX_LINES])
 
     return updated, updated
+
 
 # ==========================================================
 # Python callback: Save image
@@ -1351,8 +1621,8 @@ def add_port_and_build(is_running, nbi, port, angle, scale, config, b0, diag_typ
         data_full[i].append(new_data[i])
 
     # Ensure diag type list exists & append diagnostic type for the new entry
-    if len(data_full) < 14:
-        data_full.extend([[] for _ in range(14 - len(data_full))])
+    if len(data_full) < 15:
+        data_full.extend([[] for _ in range(15 - len(data_full))])
     if not data_full[11]:
         data_full[11] = []
     data_full[11].append(diag_type or "FIDA")
@@ -1371,6 +1641,7 @@ def add_port_and_build(is_running, nbi, port, angle, scale, config, b0, diag_typ
         cfg_name_for_tag = config.replace("CACHED::", "", 1) if str(config).startswith("CACHED::") else os.path.basename(config)
         data_full[12].append(make_config_tag_from_filename(cfg_name_for_tag))
         data_full[13].append(make_b0_tag(b0))
+        data_full[14].append(f"θ={angle}°")
     except Exception as e:
         logs.append(f"⚠️ WF not calculated for {port}: {e}")
 
@@ -1382,12 +1653,15 @@ def add_port_and_build(is_running, nbi, port, angle, scale, config, b0, diag_typ
 
     # Refresh header using the shared builder (includes welcome + nicely formatted labels)
     try:
+        wf_shape = infer_wf_cell_shape(data_full)
         header_lines = build_current_config_message(
             port_names=data_full[1],
             device_names=data_full[0],
             diag_types=data_full[11],
             config_tags=data_full[12],
             b0_tags=data_full[13],
+            angle_tags=data_full[14],
+            wf_shape=wf_shape,
         )
     except Exception:
         # Fallback: keep previous header unchanged if formatter fails
@@ -1441,13 +1715,12 @@ def save_results(is_running, _):
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".h5")
         tmp.close()
         # Ensure 14 slots + pad tags for older datasets
-        if len(payload) < 14:
-            payload = payload + [[] for _ in range(14 - len(payload))]
+        if len(payload) < 15:
+            payload = payload + [[] for _ in range(15 - len(payload))]
         ports_n = len(payload[1]) if isinstance(payload[1], list) else 0
-        payload[12] = (payload[12] if len(payload) > 12 and isinstance(payload[12], list) else [])
-        payload[13] = (payload[13] if len(payload) > 13 and isinstance(payload[13], list) else [])
-        payload[12] = (payload[12] + [""] * ports_n)[:ports_n]
-        payload[13] = (payload[13] + [""] * ports_n)[:ports_n]
+        for idx in (12, 13, 14):
+            cur = payload[idx] if len(payload) > idx and isinstance(payload[idx], list) else []
+            payload[idx] = (cur + [""] * ports_n)[:ports_n]
         save_data_full_h5(tmp.name, payload)
         with open(tmp.name, "rb") as f:
             blob = f.read()
@@ -1521,12 +1794,15 @@ def upload_results_to_cache(contents, filename, trgr):
 
     # Update header (uses your formatter internally)
     try:
+        wf_shape = infer_wf_cell_shape(data_full)
         header = build_current_config_message(
             port_names=data_full[1],
             device_names=data_full[0],
             diag_types=data_full[11],
             config_tags=data_full[12],
             b0_tags=data_full[13],
+            angle_tags=data_full[14],
+            wf_shape=wf_shape,
         )
     except Exception:
         header = dash.no_update
@@ -1535,7 +1811,7 @@ def upload_results_to_cache(contents, filename, trgr):
     n_ports = len(data_full[1]) if isinstance(data_full[1], list) else 0
     logs.append(f"✅ Results loaded: {name}")
     logs.append(f"📦 Entries restored: {n_ports} ports")
-    logs.append("🗄️ Cached in memory. You can Build/Add Port now.")
+
 
     return logs, False, False, False, None, None, header, (trgr or 0) + 1
 
