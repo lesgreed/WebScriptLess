@@ -1745,7 +1745,9 @@ def save_results(is_running, _):
     Output("precalc-spinner-output", "children", allow_duplicate=True),
     Output("build-standard-output", "children", allow_duplicate=True),
     Output("console-header", "children", allow_duplicate=True),
-    Output("cache-update-trigger", "data", allow_duplicate=True),  # ensure allow_duplicate=True
+    Output("cache-update-trigger", "data", allow_duplicate=True),
+    Output("upload-results-output", "children", allow_duplicate=True),
+    Output("matrix-size-slider", "value", allow_duplicate=True),  
     Input("upload-results", "contents"),
     State("upload-results", "filename"),
     State("cache-update-trigger", "data"),
@@ -1804,6 +1806,12 @@ def upload_results_to_cache(contents, filename, trgr):
             angle_tags=data_full[14],
             wf_shape=wf_shape,
         )
+        if wf_shape:
+            H, W = wf_shape
+            slider_value = int(H)
+            logs.append(f"🧩 Cell grid: {H}.")
+        else:
+            slider_value = dash.no_update
     except Exception:
         header = dash.no_update
 
@@ -1813,7 +1821,7 @@ def upload_results_to_cache(contents, filename, trgr):
     logs.append(f"📦 Entries restored: {n_ports} ports")
 
 
-    return logs, False, False, False, None, None, header, (trgr or 0) + 1
+    return logs, False, False, False, None, None, header, (trgr or 0) + 1, None, slider_value
 
 
 # ==========================================================

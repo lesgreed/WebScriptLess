@@ -384,8 +384,8 @@ body.dark-theme .separator-line { border-top: 1px solid rgba(255,255,255,0.3); }
   gap: 10px;
   height: 930px;
   margin-top: 4px;
-  width: 420px; 
-  max-width: 420px;
+  width: 440px; 
+  max-width: 440px;
 }
 
 .console-block {
