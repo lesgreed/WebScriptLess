@@ -38,8 +38,8 @@ def get_intersection_points_NBI(NBI_X, NBI_Y, NBI_Z, NBI_uvec_X, NBI_uvec_Y, NBI
         intersection1, intersection2 = find_first_two_intersections(surface, start_point, direction_vector)
         direction_vector = intersection2 - intersection1
         direction_normalized = direction_vector / np.linalg.norm(direction_vector)
-        intersection1_shifted = intersection1 + direction_normalized * 1
-        intersection2_shifted = intersection2 - direction_normalized * 1
+        intersection1_shifted = intersection1 #+ direction_normalized * 1
+        intersection2_shifted = intersection2 #- direction_normalized * 1
         new_NBI_start.append(intersection1_shifted)
         new_NBI_end.append(intersection2_shifted)
         lines.append(pv.Line(intersection1_shifted, intersection2_shifted))

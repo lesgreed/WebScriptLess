@@ -46,6 +46,58 @@ u4 = -1.5*10**6
 
 
 #==========================================================================FIDA Weight Function===================================================================================    
+
+"""
+def get_lambda_bounds(lambda_one, lambda_m_one, lambda_1, lambda_2):
+    cond = lambda_m_one > lambda_one
+
+    lambda_up = np.where(
+        cond,
+        np.where((lambda_m_one > lambda_2) & (lambda_one < lambda_2), lambda_2,
+                 np.where((lambda_m_one > lambda_2) & (lambda_one > lambda_2), np.nan,
+                          np.where((lambda_m_one < lambda_1) & (lambda_one < lambda_1), np.nan, lambda_m_one))),
+        np.where((lambda_one > lambda_2) & (lambda_m_one < lambda_2), lambda_2,
+                 np.where((lambda_m_one > lambda_2) & (lambda_one > lambda_2), np.nan,
+                          np.where((lambda_m_one < lambda_1) & (lambda_one < lambda_1), np.nan, lambda_one)))
+    )
+
+    lambda_down = np.where(
+        cond,
+        np.where((lambda_m_one > lambda_1) & (lambda_one < lambda_1), lambda_1,
+                 np.where((lambda_m_one > lambda_2) & (lambda_one > lambda_2), np.nan,
+                          np.where((lambda_m_one < lambda_1) & (lambda_one < lambda_1), np.nan, lambda_one))),
+        np.where((lambda_one > lambda_1) & (lambda_m_one < lambda_1), lambda_1,
+                 np.where((lambda_m_one > lambda_2) & (lambda_one > lambda_2), np.nan,
+                          np.where((lambda_m_one < lambda_1) & (lambda_one < lambda_1), np.nan, lambda_m_one)))
+    )
+
+    return lambda_up, lambda_down
+"""
+def get_interval_bounds(a, b, lo, hi):
+    cond = (a > b)
+
+    up = np.where(
+        cond,
+        np.where((a > hi) & (b < hi), hi,
+                 np.where((a > hi) & (b > hi), np.nan,
+                          np.where((a < lo) & (b < lo), np.nan, a))),
+        np.where((b > hi) & (a < hi), hi,
+                 np.where((a > hi) & (b > hi), np.nan,
+                          np.where((a < lo) & (b < lo), np.nan, b)))
+    )
+
+    down = np.where(
+        cond,
+        np.where((a > lo) & (b < lo), lo,
+                 np.where((a > hi) & (b > hi), np.nan,
+                          np.where((a < lo) & (b < lo), np.nan, b))),
+        np.where((b > lo) & (a < lo), lo,
+                 np.where((a > hi) & (b > hi), np.nan,
+                          np.where((a < lo) & (b < lo), np.nan, a)))
+    )
+
+    return up, down
+
 def prob_pi(x, y, s_l, C_l, C_f, m,lambda_0, lambda_1, lambda_2, c,phi_radian, B):
  probabilities_pi = np.zeros_like(x)                                                         #creating an array similar array x or y
  for i, s in enumerate(s_l):                                                                 #i is index element, and s is value of the element
@@ -54,13 +106,8 @@ def prob_pi(x, y, s_l, C_l, C_f, m,lambda_0, lambda_1, lambda_2, c,phi_radian, B
        lambda_one = (((y * np.sin(phi_radian)) + x * np.cos(phi_radian))/c + 1 ) *(lambda_0 + s_l[i] * y * B)
        lambda_m_one = ((-(y * np.sin(phi_radian)) + x * np.cos(phi_radian))/c + 1 ) *(lambda_0 + s_l[i] * y * B)
            
-       if np.any(lambda_m_one>lambda_one):
-        lambda_up = np.where((lambda_m_one>lambda_2) & (lambda_one<lambda_2), lambda_2, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_m_one) ))
-        lambda_down =  np.where((lambda_m_one>lambda_1) & (lambda_one<lambda_1), lambda_1, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_one) ))
-       if np.any(lambda_m_one<lambda_one):
-        lambda_up = np.where((lambda_one>lambda_2) & (lambda_m_one<lambda_2), lambda_2, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_one) ))
-        lambda_down =  np.where((lambda_one>lambda_1) & (lambda_m_one<lambda_1), lambda_1, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_m_one) ))
-    
+       lambda_up, lambda_down = get_interval_bounds(lambda_one, lambda_m_one, lambda_1, lambda_2)
+       
        #arg_1
        arg1_l = (c * (lambda_down / (lambda_0 + s_l[i] * y * B) - 1) - x * np.cos(phi_radian))/(y * np.sin(phi_radian))
        arg1_l = np.where(np.isnan(arg1_l), np.nan, np.where(arg1_l <= -1, -1, np.where(arg1_l >= 1, 1, arg1_l)))
@@ -91,13 +138,8 @@ def prob_sigma(x, y,  s_l, C_l, C_f, m,lambda_0, lambda_1, lambda_2, c,phi_radia
        lambda_one = (((y * np.sin(phi_radian)) + x * np.cos(phi_radian))/c + 1 ) *(lambda_0 + s_l[i] * y * B)
        lambda_m_one = ((-(y * np.sin(phi_radian)) + x * np.cos(phi_radian))/c + 1 ) *(lambda_0 + s_l[i] * y * B)
            
-       if np.any(lambda_m_one>lambda_one):
-        lambda_up = np.where((lambda_m_one>lambda_2) & (lambda_one<lambda_2), lambda_2, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_m_one) ))
-        lambda_down =  np.where((lambda_m_one>lambda_1) & (lambda_one<lambda_1), lambda_1, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_one) ))
-       if np.any(lambda_m_one<lambda_one):
-        lambda_up = np.where((lambda_one>lambda_2) & (lambda_m_one<lambda_2), lambda_2, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_one) ))
-        lambda_down =  np.where((lambda_one>lambda_1) & (lambda_m_one<lambda_1), lambda_1, np.where((lambda_m_one>lambda_2) & (lambda_one>lambda_2), np.nan, np.where((lambda_m_one<lambda_1) & (lambda_one<lambda_1), np.nan, lambda_m_one) ))
-    
+
+       lambda_up, lambda_down = get_interval_bounds(lambda_one, lambda_m_one, lambda_1, lambda_2)
        #arg_1
        arg1_l = (c * (lambda_down / (lambda_0 + s_l[i] * y * B) - 1) - x * np.cos(phi_radian))/(y * np.sin(phi_radian))
        arg1_l = np.where(np.isnan(arg1_l), np.nan, np.where(arg1_l <= -1, -1, np.where(arg1_l >= 1, 1, arg1_l)))
@@ -171,15 +213,9 @@ def CTS_WF_real(B, x, y, m, u1, u2, phi_radian):
     return rez
 
 def WF_CTS(x,y,u1, u2, phi_radian):
-    u_1 = np.round((y * np.sin(phi_radian) + x * np.cos(phi_radian)),1)
-    u_m1 =  np.round((x * np.cos(phi_radian) -(y * np.sin(phi_radian))),1)
-    if np.any(u_1>u_m1):
-       u_up = np.where((u_1>u2) & (u_m1<u2), u2, np.where((u_1>u2) & (u_m1>u2), np.nan, np.where((u_1<u1) & (u_m1<u1), np.nan, u_1) ))
-       u_down =  np.where((u_1>u1) & (u_m1<u1), u1, np.where((u_1>u2) & (u_m1>u2), np.nan, np.where((u_1<u1) & (u_m1<u1), np.nan, u_m1) ))
-    if np.any(u_1<u_m1):
-       u_up = np.where((u_m1>u2) & (u_1<u2), u2, np.where((u_1>u2) & (u_m1>u2), np.nan, np.where((u_1<u1) & (u_m1<u1), np.nan, u_m1) ))
-       u_down =  np.where((u_m1>u1) & (u_1<u1), u1, np.where((u_1>u2) & (u_m1>u2), np.nan, np.where((u_1<u1) & (u_m1<u1), np.nan, u_1) ))
-    
+    u_1 = (y * np.sin(phi_radian) + x * np.cos(phi_radian))
+    u_m1 =  (x * np.cos(phi_radian) -(y * np.sin(phi_radian)))
+    u_up, u_down = get_interval_bounds(u_1, u_m1, u1, u2)
 
     #gyroangle_1
     arg_1 = (u_down - x * np.cos(phi_radian))/(y * np.sin(phi_radian))

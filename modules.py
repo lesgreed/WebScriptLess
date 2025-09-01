@@ -141,7 +141,7 @@ class Data:
         WF_array = []
         import pickle
         pickle.dumps(data_B_c) 
-        with ProcessPoolExecutor(max_workers=5) as executor:
+        with ProcessPoolExecutor(max_workers=16) as executor:
             results = list(tqdm(executor.map( self.Bget.process_data_for_point, range(len(data_B_c[1])), [data_B_c] * len(data_B_c[0]), diagnostic_types)))
 
         for result_for_i in results:
@@ -265,7 +265,7 @@ class calculus():
      previous_directory = os.getcwd()
      os.chdir('J_0_test')
     
-     with ProcessPoolExecutor(max_workers=5) as executor:
+     with ProcessPoolExecutor(max_workers=16) as executor:
         results = list(tqdm(executor.map(self.calculate_J_0_for_point, points, [config] * len(points), [B_0]*len(points)), total=len(points)))
      print(config)
      os.chdir(previous_directory)
@@ -433,11 +433,12 @@ class calculus():
                 denominator = np.maximum(np.maximum(np.abs(a), np.abs(b)), 1e-13)
                 return numerator / denominator
             nan_mask = np.logical_or(np.isnan(J_0_array_1[i]), np.isnan(J_0_array_2[j])) 
-            equal_mask_J_0 = np.where(nan_mask, True, relative_difference(J_0_array_1[i], J_0_array_2[j])<delta_J)
+            equal_mask_J_0 = np.where(nan_mask, True, relative_difference(J_0_array_1[i], J_0_array_2[j])<delta_J/100)
             
             
             #==================================free=================================================
-            equal_mask_s = (np.abs(np.abs(s_1_i / s_2_j)-1) <=  delta_s)
+            nan_mask = np.isnan(s_1_i) | np.isnan(s_2_j)
+            equal_mask_s = np.where(nan_mask, True, relative_difference(s_1_i, s_2_j) <= delta_s)
             
 
             #==================================forbidden======================================
